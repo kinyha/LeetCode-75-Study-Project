@@ -1,4 +1,4 @@
-package org.example.arrays
+package arrays
 
 class Solution1 {
 

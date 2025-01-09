@@ -13,7 +13,7 @@ This repository contains solutions to LeetCode 75 problems, implemented in Kotli
 
 ## Progress Tracking
 
-- [ ] Arrays & Strings (1/15)
+- [ ] Arrays & Strings (3/15)
 - [ ] Two Pointers & Sliding Window (0/10)
 - [ ] Trees & Binary Search (0/15)
 - [ ] Graphs & BFS/DFS (0/15)

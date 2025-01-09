@@ -32,4 +32,11 @@ class SolutionArraysTest {
         assertEquals(listOf(true,false,true), kidsWithCandies(intArrayOf(12,1,12), 10))
 
     }
+
+    @Test
+    fun testCanPlaceFlowers() {
+        assertEquals(true, canPlaceFlowers(intArrayOf(1, 0, 0, 0, 1), 1))
+        assertEquals(false, canPlaceFlowers(intArrayOf(1, 0, 0, 0, 1), 2))
+        assertEquals(true, canPlaceFlowers(intArrayOf(0), 1))
+    }
 }

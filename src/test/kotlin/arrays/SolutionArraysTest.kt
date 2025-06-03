@@ -39,4 +39,11 @@ class SolutionArraysTest {
         assertEquals(false, canPlaceFlowers(intArrayOf(1, 0, 0, 0, 1), 2))
         assertEquals(true, canPlaceFlowers(intArrayOf(0), 1))
     }
+
+    @Test
+    fun testReverseVowels() {
+        assertEquals("AceCreIm", reverseVowels("IceCreAm"))
+    }
+
+
 }

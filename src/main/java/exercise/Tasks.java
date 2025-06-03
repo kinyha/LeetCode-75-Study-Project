@@ -28,10 +28,12 @@ public class Tasks {
 //        StreamTasksData.printSampleData();
 
         //2
-        transactions.forEach(System.out::println);
+        //transactions.forEach(System.out::println);
         //getHighPaidItEmployees(employees).forEach(System.out::println);
-        getRecentTransactionCategories(transactions,30).forEach(System.out::println);
-
+        //getRecentTransactionCategories(transactions,30).forEach(System.out::println);
+        //getTopExpensiveOrders(orders,3).forEach(System.out::println);
+        createEmailToCustomerMap(customers).forEach((key, value) -> System.out.println(key + " -> " + value));
+        System.out.println(calculateCustomerPayments(transactions,1L));
     }
 
 
@@ -105,22 +107,61 @@ public class Tasks {
 
     // 2.3 Find top N most expensive orders
     public static List<Order> getTopExpensiveOrders(List<Order> orders, int topN) {
-        // TODO: sort by total amount DESC, limit to topN
-        //return orders.stream()
-                ;
+        return orders.stream()
+                .sorted(Comparator.comparing(Order::getTotalAmount)
+                        .reversed())
+                .limit(topN)
+                .collect(Collectors.toList());
     }
 
     // 2.4 Create map: email -> customer (only active)
     public static Map<String, Customer> createEmailToCustomerMap(List<Customer> customers) {
-        // TODO: filter active, collect to Map
-        return null;
+        return customers.stream()
+                .filter(Customer::isActive)
+                //.collect(Collectors.groupingBy(Customer::getEmail));
+                .collect(Collectors.toMap(Customer::getEmail,Function.identity()));
     }
 
     // 2.5 Calculate total payment amount for specific customer
     public static double calculateCustomerPayments(List<Transaction> transactions, Long customerId) {
-        // TODO: filter by customerId and type PAYMENT, sum amounts
-        return 0.0;
+        return transactions
+                .stream()
+                .filter(transaction -> transaction.getCustomerId() == customerId)
+                .mapToDouble(Transaction::getAmount)
+                .sum();
     }
 
+    // ============ LEVEL 3 (Middle) ============
+
+    // 3.1 Count employees by department
+    public static Map<String, Long> countEmployeesByDepartment(List<Employee> employees) {
+        // TODO: group by department, count
+        return null;
+    }
+
+    // 3.2 Average salary by city, sorted by salary DESC
+    public static LinkedHashMap<String, Double> getAvgSalaryByCitySorted(List<Employee> employees) {
+        // TODO: group by city, calculate avg, sort by value DESC
+        return null;
+    }
+
+    // 3.3 Get all unique product names from all orders, sorted
+    public static List<String> getAllUniqueProductsSorted(List<Order> orders) {
+        // TODO: flatMap order items, distinct products, sort
+        return null;
+    }
+
+    // 3.4 Group transactions by customer type and status, sum amounts
+    public static Map<CustomerType, Map<TransactionStatus, Double>> groupTransactionsByCustomerTypeAndStatus(
+            List<Transaction> transactions, List<Customer> customers) {
+        // TODO: join with customers, group by type then status, sum
+        return null;
+    }
+
+    // 3.5 Find first IT employee: 2+ years experience and salary > dept average
+    public static Optional<Employee> findExperiencedItEmployeeAboveAvg(List<Employee> employees) {
+        // TODO: calculate IT avg salary, filter by criteria, findFirst
+        return Optional.empty();
+    }
 
 }

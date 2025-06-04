@@ -138,7 +138,7 @@ public class DataGenerator {
                     // 92% completed, 3% pending, 3% failed, 2% cancelled
                     TransactionStatus status;
                     double rand = random.nextDouble();
-                    if (rand < 0.92) status = TransactionStatus.COMPLETED;
+                    if (rand < 0.88) status = TransactionStatus.COMPLETED;
                     else if (rand < 0.95) status = TransactionStatus.PENDING;
                     else if (rand < 0.98) status = TransactionStatus.FAILED;
                     else status = TransactionStatus.CANCELLED;

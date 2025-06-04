@@ -3,10 +3,10 @@ package exercise.env;
 import java.util.List;
 
 public class StreamTasksData {
-    public static final List<Employee> employees = DataGenerator.generateEmployees(75);
-    public static final List<Customer> customers = DataGenerator.generateCustomers(50);
-    public static final List<Transaction> transactions = DataGenerator.generateTransactions(200, 50);
-    public static final List<Order> orders = DataGenerator.generateOrders(100, 50);
+    public static final List<Employee> employees = DataGenerator.generateEmployees(750);
+    public static final List<Customer> customers = DataGenerator.generateCustomers(500);
+    public static final List<Transaction> transactions = DataGenerator.generateTransactions(2000, 500);
+    public static final List<Order> orders = DataGenerator.generateOrders(1000, 500);
 
     // Для удобства отладки
     public static void printSampleData() {

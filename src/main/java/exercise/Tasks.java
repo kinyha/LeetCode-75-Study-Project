@@ -3,13 +3,10 @@ package exercise;
 import exercise.env.*;
 
 import java.time.LocalDateTime;
+import java.time.YearMonth;
 import java.util.*;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 import java.util.stream.Collectors;
-
-import static exercise.env.Employee.printEmployees;
 
 public class Tasks {
     public static void main(String[] args) {
@@ -17,23 +14,25 @@ public class Tasks {
         List<Customer> customers = StreamTasksData.customers;
         List<Transaction> transactions = StreamTasksData.transactions;
         List<Order> orders = StreamTasksData.orders;
-
-        //orders.forEach(System.out::println);
-
+        //1
 //        findEmplFrom(employees,"Москва").forEach(System.out::println);
 //        getActiveCustomerNames(customers).forEach(System.out::println);
 //        System.out.println(countCompletedTransactions(transactions));
 //        System.out.println(findMaxSalary(employees));
 //        System.out.println(hasVipCustomerInCity(customers,"Boston"));
-//        StreamTasksData.printSampleData();
-
         //2
-        //transactions.forEach(System.out::println);
-        //getHighPaidItEmployees(employees).forEach(System.out::println);
-        //getRecentTransactionCategories(transactions,30).forEach(System.out::println);
-        //getTopExpensiveOrders(orders,3).forEach(System.out::println);
-        createEmailToCustomerMap(customers).forEach((key, value) -> System.out.println(key + " -> " + value));
-        System.out.println(calculateCustomerPayments(transactions,1L));
+//        orders.forEach(System.out::println);
+//        getHighPaidItEmployees(employees).forEach(System.out::println);
+//        getRecentTransactionCategories(transactions,30).forEach(System.out::println);
+//        getTopExpensiveOrders(orders,3).forEach(System.out::println);
+//        createEmailToCustomerMap(customers).forEach((key, value) -> System.out.println(key + " -> " + value));
+//        System.out.println(calculateCustomerPayments(transactions,1L));
+        //3
+//        countEmployeesByDepartment(employees).forEach((key,value) -> System.out.println(key + " -> " + value));
+//        getAvgSalaryByCitySorted(employees).forEach((key, value) -> System.out.println(key + " -> " + Math.round(value) + "$"));
+//        getAllUniqueProductsSorted(orders).forEach(System.out::println);
+//        groupTransactionsByCustomerTypeAndStatus(transactions,customers).forEach((key, value) -> System.out.println(key + " -> " + value));
+//        System.out.println(findExperiencedItEmployeeAboveAvg(employees).get());
     }
 
 
@@ -119,7 +118,7 @@ public class Tasks {
         return customers.stream()
                 .filter(Customer::isActive)
                 //.collect(Collectors.groupingBy(Customer::getEmail));
-                .collect(Collectors.toMap(Customer::getEmail,Function.identity()));
+                .collect(Collectors.toMap(Customer::getEmail, Function.identity()));
     }
 
     // 2.5 Calculate total payment amount for specific customer
@@ -135,33 +134,151 @@ public class Tasks {
 
     // 3.1 Count employees by department
     public static Map<String, Long> countEmployeesByDepartment(List<Employee> employees) {
-        // TODO: group by department, count
-        return null;
+        return employees.stream()
+                .collect(Collectors.groupingBy(Employee::getDepartment, Collectors.counting()));
     }
 
     // 3.2 Average salary by city, sorted by salary DESC
     public static LinkedHashMap<String, Double> getAvgSalaryByCitySorted(List<Employee> employees) {
-        // TODO: group by city, calculate avg, sort by value DESC
-        return null;
+        return employees.stream()
+                .collect(Collectors.groupingBy(
+                        Employee::getCity,
+                        Collectors.averagingDouble(Employee::getSalary)
+                ))
+                .entrySet().stream()
+                .sorted(Map.Entry.<String, Double>comparingByValue().reversed())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        Map.Entry::getValue,
+                        (a, b) -> a,
+                        LinkedHashMap::new
+                ));
     }
 
     // 3.3 Get all unique product names from all orders, sorted
     public static List<String> getAllUniqueProductsSorted(List<Order> orders) {
-        // TODO: flatMap order items, distinct products, sort
-        return null;
+        return orders.stream()
+                .flatMap(order -> order.getItems().stream())
+                .map(OrderItem::getProductName)
+                .distinct()
+                .sorted()
+                .collect(Collectors.toList());
     }
 
     // 3.4 Group transactions by customer type and status, sum amounts
     public static Map<CustomerType, Map<TransactionStatus, Double>> groupTransactionsByCustomerTypeAndStatus(
             List<Transaction> transactions, List<Customer> customers) {
-        // TODO: join with customers, group by type then status, sum
-        return null;
+//        var a = customers.stream()
+//                        .collect(Collectors.toMap(
+//                                //Customer::getType,
+//                                Customer::getId,
+//                                customer -> transactions.stream()
+//                                        .filter(transaction -> transaction.getCustomerId().equals(customer.getId()))
+//                                        .collect(Collectors.groupingBy(
+//                                                Transaction::getStatus,
+//                                                Collectors.summingDouble(Transaction::getAmount)
+//                                        ))
+//                                        //.toList()
+//                                , (old,wen) -> old
+//
+//                        ));
+//
+//        a.forEach((key, value) -> System.out.println(key + " -> " + value));
+
+        Map<Long, Customer> customerMap = customers.stream()
+                .collect(Collectors.toMap(Customer::getId, Function.identity()));
+
+        return transactions.stream()
+                .filter(t -> customerMap.containsKey(t.getCustomerId()))
+                .collect(Collectors.groupingBy(
+                        t -> customerMap.get(t.getCustomerId()).getType(),
+                        Collectors.groupingBy(
+                                Transaction::getStatus,
+                                Collectors.summingDouble(Transaction::getAmount)
+                        )
+                ));
     }
 
     // 3.5 Find first IT employee: 2+ years experience and salary > dept average
     public static Optional<Employee> findExperiencedItEmployeeAboveAvg(List<Employee> employees) {
-        // TODO: calculate IT avg salary, filter by criteria, findFirst
-        return Optional.empty();
+
+        return employees.stream()
+                .filter(e -> e.getDepartment().equals("Engineering"))
+                .filter(e -> LocalDateTime.now().minusYears(e.getHireDate().getYear()).getYear() > 2)
+                .filter(e -> e.getSalary() > employees.stream()
+                        .filter(employee -> employee.getDepartment().equals("Engineering"))
+                        .mapToDouble(Employee::getSalary)
+                        .average()
+                        .orElse(0.0))
+                .findFirst();
     }
 
+    // ============ LEVEL 4 (Middle+/Senior) ============
+
+    // 4.1 Top 3 customers by transaction sum for each month
+    public static Map<YearMonth, List<CustomerSummary>> getMonthlyTop3Customers(
+            List<Transaction> transactions, List<Customer> customers) {
+        // TODO: group by month, then by customer, sum amounts, get top 3
+        return null;
+    }
+
+    // Helper class for 4.1
+    static class CustomerSummary {
+        Long customerId;
+        String name;
+        Double totalAmount;
+
+        // Constructor, getters...
+    }
+
+    // 4.2 Product statistics using parallel streams
+    public static Map<String, ProductStats> calculateProductStatisticsParallel(List<Order> orders) {
+        // TODO: use parallelStream, calculate stats per product
+        return null;
+    }
+
+    // Helper class for 4.2
+    static class ProductStats {
+        long orderCount;
+        long totalQuantity;
+        DoubleSummaryStatistics priceStats;
+
+        // Constructor, getters...
+    }
+
+    // 4.3 Custom median collector and median salary by department
+    public static Map<String, Double> getMedianSalaryByDepartment(List<Employee> employees) {
+        // TODO: create custom Collector for median, apply by department
+        return null;
+    }
+
+    // 4.4 Customers with sum > 50000 in last 30 days and no cancelled transactions
+    public static Set<Customer> findQualifiedCustomers(List<Transaction> transactions,
+                                                       List<Customer> customers,
+                                                       double minAmount) {
+        // TODO: optimize for performance, single pass if possible
+        return null;
+    }
+
+    // 4.5 Department salary deviation report (employees with 20%+ deviation from median)
+    public static Map<String, DepartmentReport> createSalaryDeviationReport(List<Employee> employees) {
+        // TODO: calculate median per dept, find deviations > 20%, split above/below
+        return null;
+    }
+
+    // Helper classes for 4.5
+    static class EmployeeDeviation {
+        Employee employee;
+        double deviationPercent;
+
+        // Constructor, getters...
+    }
+
+    static class DepartmentReport {
+        double medianSalary;
+        List<EmployeeDeviation> aboveMedian;
+        List<EmployeeDeviation> belowMedian;
+
+        // Constructor, getters...
+    }
 }

@@ -133,7 +133,7 @@ public class DataGenerator {
 
                     // Date: 0-120 days ago
                     LocalDateTime dateTime = LocalDateTime.now()
-                            .minusMinutes(random.nextInt(60 * 24 * 120));
+                            .minusMinutes(random.nextInt(60 * 24 * 480));
 
                     // 92% completed, 3% pending, 3% failed, 2% cancelled
                     TransactionStatus status;

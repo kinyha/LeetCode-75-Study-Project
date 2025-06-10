@@ -14,6 +14,8 @@ public class Tasks {
         List<Customer> customers = StreamTasksData.customers;
         List<Transaction> transactions = StreamTasksData.transactions;
         List<Order> orders = StreamTasksData.orders;
+        StreamTasksData.printSampleData();
+
         //1
 //        findEmplFrom(employees,"Москва").forEach(System.out::println);
 //        getActiveCustomerNames(customers).forEach(System.out::println);
@@ -33,6 +35,8 @@ public class Tasks {
 //        getAllUniqueProductsSorted(orders).forEach(System.out::println);
 //        groupTransactionsByCustomerTypeAndStatus(transactions,customers).forEach((key, value) -> System.out.println(key + " -> " + value));
 //        System.out.println(findExperiencedItEmployeeAboveAvg(employees).get());
+        //4
+        //getMonthlyTop3Customers(transactions, customers);
     }
 
 
@@ -218,22 +222,62 @@ public class Tasks {
     // 4.1 Top 3 customers by transaction sum for each month
     public static Map<YearMonth, List<CustomerSummary>> getMonthlyTop3Customers(
             List<Transaction> transactions, List<Customer> customers) {
-        // TODO: group by month, then by customer, sum amounts, get top 3
+
+        //Map<YearMonth, Map<Long,Double>
+        var monthlyAmounts = transactions.stream()
+                .collect(Collectors.groupingBy(
+                        transaction -> YearMonth.from(transaction.getDateTime()),
+
+                        Collectors.groupingBy(
+                                Transaction::getCustomerId,
+                                Collectors.summingDouble(Transaction::getAmount)
+                        )
+                ));
+        var customerNames = customers.stream()
+                .collect(Collectors.toMap(Customer::getId, Customer::getName));
+
+        var top3Monthly = monthlyAmounts.entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().entrySet().stream()
+                                .map(e -> new CustomerSummary(
+                                        e.getKey(),
+                                        customerNames.get(e.getKey()),
+                                        e.getValue()
+                                ))
+                                .sorted(Comparator.comparing(CustomerSummary::totalAmount).reversed())
+                                .limit(3)
+                                .toList()
+                ));
+
+//        var result = monthlyAmounts.entrySet().stream()
+//                .collect(Collectors.toMap(
+//                        Map.Entry::getKey,
+//                        entry -> entry.getValue().entrySet().stream()
+//                                .map(e -> new CustomerSummary(
+//                                        e.getKey(),
+//                                        customerNames.get(e.getKey()),
+//                                        e.getValue())
+//                                ).sorted((c1,c2) -> Double.compare(c2.totalAmount, c1.totalAmount))
+//                                .limit(3)
+//                                .toList()
+//                ));
+        //result.forEach((key, value) -> System.out.println(key + " -> " + value));
+        top3Monthly.forEach((key, value) -> System.out.println(key + " -> " + value));
         return null;
+
     }
 
     // Helper class for 4.1
-    static class CustomerSummary {
-        Long customerId;
-        String name;
-        Double totalAmount;
-
-        // Constructor, getters...
+    record CustomerSummary(
+            Long customerId,
+            String name,
+            Double totalAmount
+    ) {
     }
 
     // 4.2 Product statistics using parallel streams
     public static Map<String, ProductStats> calculateProductStatisticsParallel(List<Order> orders) {
-        // TODO: use parallelStream, calculate stats per product
         return null;
     }
 
@@ -248,7 +292,6 @@ public class Tasks {
 
     // 4.3 Custom median collector and median salary by department
     public static Map<String, Double> getMedianSalaryByDepartment(List<Employee> employees) {
-        // TODO: create custom Collector for median, apply by department
         return null;
     }
 
@@ -256,13 +299,11 @@ public class Tasks {
     public static Set<Customer> findQualifiedCustomers(List<Transaction> transactions,
                                                        List<Customer> customers,
                                                        double minAmount) {
-        // TODO: optimize for performance, single pass if possible
         return null;
     }
 
     // 4.5 Department salary deviation report (employees with 20%+ deviation from median)
     public static Map<String, DepartmentReport> createSalaryDeviationReport(List<Employee> employees) {
-        // TODO: calculate median per dept, find deviations > 20%, split above/below
         return null;
     }
 
@@ -281,4 +322,8 @@ public class Tasks {
 
         // Constructor, getters...
     }
+
+
+
+
 }

@@ -2,6 +2,7 @@ package exercise;
 
 import exercise.env.*;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
 import java.util.*;
@@ -14,7 +15,6 @@ public class Tasks {
         List<Customer> customers = StreamTasksData.customers;
         List<Transaction> transactions = StreamTasksData.transactions;
         List<Order> orders = StreamTasksData.orders;
-        StreamTasksData.printSampleData();
 
         //1
 //        findEmplFrom(employees,"Москва").forEach(System.out::println);
@@ -37,6 +37,16 @@ public class Tasks {
 //        System.out.println(findExperiencedItEmployeeAboveAvg(employees).get());
         //4
         //getMonthlyTop3Customers(transactions, customers);
+
+        //findEmployeesAboveDeptAverage(employees).forEach(System.out::println);
+        //getTopCustomersByAmount(transactions, customers,5).forEach(System.out::println);
+        //findDepartmentsWithSalaryGrowth(employees).forEach(System.out::println);
+
+        //getAverageOrderValueByDayOfWeek(orders).forEach((key, value) -> System.out.println(key + " -> " + value));
+        
+        //3.5
+        findCustomersWithAllCategories(transactions, customers).forEach(System.out::println);
+
     }
 
 
@@ -323,7 +333,113 @@ public class Tasks {
         // Constructor, getters...
     }
 
+    // ============ LEVEL 3 (Middle) - 10 tasks ============
 
+    // 3.1 Find employees who earn more than their department average
+    public static List<Employee> findEmployeesAboveDeptAverage(List<Employee> employees) {
+        // TODO: return employees with salary > their department's average
+        var departAvg = employees.stream()
+                .collect(Collectors.groupingBy(
+                        Employee::getDepartment,
+                        Collectors.averagingDouble(Employee::getSalary)
+                ));
+
+        departAvg.forEach((key, value) -> System.out.println(key + " -> " + value));
+        return employees.stream()
+                .filter(employee -> employee.getSalary() > departAvg.get(employee.getDepartment()))
+                .toList();
+    }
+
+    // 3.2 Get top N customers by total completed transaction amount
+    public static List<CustomerSummary> getTopCustomersByAmount(
+            List<Transaction> transactions,
+            List<Customer> customers,
+            int topN) {
+        // TODO: return top N customers with their total amounts (only COMPLETED transactions)
+
+        return customers.stream()
+                .map(customer -> new CustomerSummary(customer.getId(),customer.getName(),
+                        transactions.stream()
+                                .filter(t -> t.getCustomerId() == customer.getId() && t.getStatus() == TransactionStatus.COMPLETED)
+                                .mapToDouble(Transaction::getAmount)
+                                .sum()
+                ))
+                .sorted(Comparator.comparing(CustomerSummary::totalAmount).reversed())
+                .limit(topN)
+                .toList();
+    }
+
+    // 3.3 Find all departments where average salary increased compared to employees hired 2+ years ago
+    public static Set<String> findDepartmentsWithSalaryGrowth(List<Employee> employees) {
+        // TODO: compare avg salary of employees hired <2 years ago vs >=2 years ago
+
+        var oldSal = employees.stream()
+                .filter(e -> e.getHireDate().isBefore(LocalDateTime.now().minusYears(2).toLocalDate()))
+                .collect(Collectors.groupingBy(Employee::getDepartment))
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().stream()
+                                .mapToDouble(Employee::getSalary)
+                                .average()
+                                .orElse(0.0)
+                ));
+        var newSal = employees.stream()
+                .filter(e -> e.getHireDate().isAfter(LocalDateTime.now().minusYears(2).toLocalDate()))
+                .collect(Collectors.groupingBy(Employee::getDepartment))
+                .entrySet().stream()
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        entry -> entry.getValue().stream()
+                                .mapToDouble(Employee::getSalary)
+                                .average()
+                                .orElse(0.0)
+                ));
+
+        return oldSal.entrySet().stream()
+                .filter(entry ->  entry.getValue() >= newSal.get(entry.getKey()))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+    }
+
+    // 3.4 Group orders by day of week and calculate average order value
+    public static Map<DayOfWeek, Double> getAverageOrderValueByDayOfWeek(List<Order> orders) {
+        // TODO: group by day of week, calculate average total amount
+        return orders.stream()
+                        .collect(Collectors.groupingBy(
+                                order -> order.getOrderDate().getDayOfWeek(),
+                                Collectors.averagingDouble(Order::getTotalAmount)
+                        ));
+    }
+
+    // 3.5 Find customers who have transactions in all categories
+    public static List<Customer> findCustomersWithAllCategories(
+            List<Transaction> transactions,
+            List<Customer> customers) {
+        // TODO: return customers who have at least one transaction in each existing category
+        
+        // Get all unique categories from transactions
+        Set<String> allCategories = transactions.stream()
+                .map(Transaction::getCategory)
+                .collect(Collectors.toSet());
+        
+        // Group transactions by customer ID and get their categories
+        Map<Long, Set<String>> customerCategories = transactions.stream()
+                .collect(Collectors.groupingBy(
+                        Transaction::getCustomerId,
+                        Collectors.mapping(Transaction::getCategory, Collectors.toSet())
+                ));
+        
+        // Find customers who have transactions in all categories
+        return customers.stream()
+                .filter(customer -> {
+                    Set<String> customerCats = customerCategories.get(customer.getId());
+                    return customerCats != null && customerCats.containsAll(allCategories);
+                })
+                .collect(Collectors.toList());
+    }
+
+ 
 
 
 }

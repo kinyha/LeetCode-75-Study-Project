@@ -41,9 +41,6 @@ public class Tasks {
         //findEmployeesAboveDeptAverage(employees).forEach(System.out::println);
         //getTopCustomersByAmount(transactions, customers,5).forEach(System.out::println);
         //findDepartmentsWithSalaryGrowth(employees).forEach(System.out::println);
-
-        //getAverageOrderValueByDayOfWeek(orders).forEach((key, value) -> System.out.println(key + " -> " + value));
-        
         //3.5
         findCustomersWithAllCategories(transactions, customers).forEach(System.out::println);
 

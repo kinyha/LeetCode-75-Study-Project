@@ -52,7 +52,8 @@ class TasksTest {
         assertThat(result).isNotNull();
         
         // Log the result for verification
-        System.out.println("Customers with all categories: " + result.size());
+        System.out.println("Customers with" +
+                " all categories: " + result.size());
         result.forEach(customer -> System.out.println("- " + customer.getName()));
         System.out.println("Total categories: " + allCategories.size());
         System.out.println("Categories: " + allCategories);

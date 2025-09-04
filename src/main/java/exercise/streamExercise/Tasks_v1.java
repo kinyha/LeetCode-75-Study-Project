@@ -23,12 +23,12 @@ public class Tasks_v1 {
 //        System.out.println(findMaxSalary(employees));
 //        System.out.println(hasVipCustomerInCity(customers,"Boston"));
         //2
-//        orders.forEach(System.out::println);
-//        getHighPaidItEmployees(employees).forEach(System.out::println);
-//        getRecentTransactionCategories(transactions,30).forEach(System.out::println);
-//        getTopExpensiveOrders(orders,3).forEach(System.out::println);
-//        createEmailToCustomerMap(customers).forEach((key, value) -> System.out.println(key + " -> " + value));
-//        System.out.println(calculateCustomerPayments(transactions,1L));
+        orders.forEach(System.out::println);
+        getHighPaidItEmployees(employees).forEach(System.out::println);
+        getRecentTransactionCategories(transactions,30).forEach(System.out::println);
+        getTopExpensiveOrders(orders,3).forEach(System.out::println);
+        createEmailToCustomerMap(customers).forEach((key, value) -> System.out.println(key + " -> " + value));
+        System.out.println(calculateCustomerPayments(transactions,1L));
         //3
         countEmployeesByDepartment(employees).forEach((key,value) -> System.out.println(key + " -> " + value));
         getAvgSalaryByCitySorted(employees).forEach((key, value) -> System.out.println(key + " -> " + Math.round(value) + "$"));

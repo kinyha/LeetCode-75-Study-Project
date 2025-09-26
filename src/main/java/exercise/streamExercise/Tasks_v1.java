@@ -1,6 +1,6 @@
-package exercise;
+package exercise.streamExercise;
 
-import exercise.env.*;
+import exercise.streamExercise.data_v1.*;
 
 import java.time.DayOfWeek;
 import java.time.LocalDateTime;
@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-public class Tasks {
+public class Tasks_v1 {
     public static void main(String[] args) {
         List<Employee> employees = StreamTasksData.employees;
         List<Customer> customers = StreamTasksData.customers;
@@ -30,17 +30,16 @@ public class Tasks {
 //        createEmailToCustomerMap(customers).forEach((key, value) -> System.out.println(key + " -> " + value));
 //        System.out.println(calculateCustomerPayments(transactions,1L));
         //3
-//        countEmployeesByDepartment(employees).forEach((key,value) -> System.out.println(key + " -> " + value));
-//        getAvgSalaryByCitySorted(employees).forEach((key, value) -> System.out.println(key + " -> " + Math.round(value) + "$"));
-//        getAllUniqueProductsSorted(orders).forEach(System.out::println);
-//        groupTransactionsByCustomerTypeAndStatus(transactions,customers).forEach((key, value) -> System.out.println(key + " -> " + value));
-//        System.out.println(findExperiencedItEmployeeAboveAvg(employees).get());
-        //4
-        //getMonthlyTop3Customers(transactions, customers);
+        countEmployeesByDepartment(employees).forEach((key,value) -> System.out.println(key + " -> " + value));
+        getAvgSalaryByCitySorted(employees).forEach((key, value) -> System.out.println(key + " -> " + Math.round(value) + "$"));
+        getAllUniqueProductsSorted(orders).forEach(System.out::println);
+        groupTransactionsByCustomerTypeAndStatus(transactions,customers).forEach((key, value) -> System.out.println(key + " -> " + value));
+        System.out.println(findExperiencedItEmployeeAboveAvg(employees).get());
+        getMonthlyTop3Customers(transactions, customers);
 
-        //findEmployeesAboveDeptAverage(employees).forEach(System.out::println);
-        //getTopCustomersByAmount(transactions, customers,5).forEach(System.out::println);
-        //findDepartmentsWithSalaryGrowth(employees).forEach(System.out::println);
+        findEmployeesAboveDeptAverage(employees).forEach(System.out::println);
+        getTopCustomersByAmount(transactions, customers,5).forEach(System.out::println);
+        findDepartmentsWithSalaryGrowth(employees).forEach(System.out::println);
         //3.5
         findCustomersWithAllCategories(transactions, customers).forEach(System.out::println);
 

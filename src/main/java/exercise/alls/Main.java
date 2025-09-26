@@ -1,6 +1,4 @@
-package exercise;
-
-import java.util.List;
+package exercise.alls;
 
 public class Main {
     Node root;

@@ -1,4 +1,4 @@
-package exercise;
+package exercise.alls;
 
 public class MaiTh{
     public static void main(String[] args) {

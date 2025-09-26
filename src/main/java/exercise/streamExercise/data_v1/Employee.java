@@ -1,4 +1,4 @@
-package exercise.env;
+package exercise.streamExercise.data_v1;
 
 import java.time.LocalDate;
 import java.util.List;

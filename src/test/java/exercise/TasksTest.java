@@ -1,6 +1,10 @@
 package exercise;
 
-import exercise.env.*;
+import exercise.streamExercise.Tasks_v1;
+import exercise.streamExercise.data_v1.Customer;
+import exercise.streamExercise.data_v1.Employee;
+import exercise.streamExercise.data_v1.StreamTasksData;
+import exercise.streamExercise.data_v1.Transaction;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
@@ -8,7 +12,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static exercise.env.StreamTasksData.*;
+import static exercise.streamExercise.data_v1.StreamTasksData.*;
 import static org.assertj.core.api.Assertions.assertThat;
 
 class TasksTest {
@@ -29,7 +33,7 @@ class TasksTest {
     @Test
     void findCustomersWithAllCategories() {
         // Test with actual data
-        List<Customer> result = Tasks.findCustomersWithAllCategories(transactions, customers);
+        List<Customer> result = Tasks_v1.findCustomersWithAllCategories(transactions, customers);
         
         // Get all unique categories from transactions
         Set<String> allCategories = transactions.stream()

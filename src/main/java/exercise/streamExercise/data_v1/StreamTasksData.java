@@ -1,4 +1,4 @@
-package exercise.env;
+package exercise.streamExercise.data_v1;
 
 import java.util.List;
 

@@ -1,4 +1,4 @@
-package exercise.qwe;
+package exercise.diff;
 
 
 import java.lang.reflect.Field;

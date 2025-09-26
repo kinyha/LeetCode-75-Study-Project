@@ -31,7 +31,7 @@ This is a LeetCode 75 study project implemented in Kotlin/Java using Gradle. The
 ```bash
 # Run specific Java class with main method
 java -cp build/classes/java/main exercise.concurency.ConcurrentCollectionsExamples
-java -cp build/classes/java/main exercise.Tasks
+java -cp build/classes/java/main exercise.streamExercise.Tasks_v1
 java -cp build/classes/java/main exercise.concurency.BasicThreads
 
 # Pattern: java -cp build/classes/java/main <full.package.ClassName>

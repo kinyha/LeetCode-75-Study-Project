@@ -1,4 +1,4 @@
-package exercise;
+package exercise.alls;
 
 import java.util.ArrayList;
 import java.util.List;

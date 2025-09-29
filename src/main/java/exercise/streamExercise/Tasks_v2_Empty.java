@@ -5,8 +5,7 @@ import exercise.streamExercise.data_v2.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
-import static java.util.stream.Collectors.mapping;
-import static java.util.stream.Collectors.toSet;
+import static java.util.stream.Collectors.*;
 
 /**
  * Stream API Задачи v2 - университетская система управления (БЕЗ РЕШЕНИЙ)
@@ -30,19 +29,19 @@ public class Tasks_v2_Empty {
         dataset = DataGeneratorV2.generateCompleteDataset();
         dataset.printDatasetStatistics();
 
-        System.out.println("\n=== Уровень 1 задачи ===");
-        //level1Task1(students).entrySet().forEach(System.out::println);
-        // level1Task2();
-        // level1Task3();
-        // level1Task4();
-        // level1Task5();
+        System.out.println("\n=== Уровень 1 задачи ==="); // + 5/5
+//        level1Task1(dataset.getStudents()).entrySet().forEach(System.out::println);
+//        level1Task2(dataset.getCourses()).forEach(System.out::println);
+//        level1Task3(dataset.getTeachers()).forEach(System.out::println);
+//        level1Task4(dataset.getProjects()).ifPresent(System.out::println);
+//        level1Task5(dataset.getCompanies()).forEach(System.out::println);
 
         System.out.println("\n=== Уровень 2 задачи ===");
-        // level2Task1();
-        // level2Task2();
-        // level2Task3();
-        // level2Task4();
-        // level2Task5();
+        level2Task1(dataset.getStudents()).entrySet().forEach(System.out::println);
+//        level2Task2();
+//        level2Task3();
+//        level2Task4();
+//        level2Task5();
 
         System.out.println("\n=== Уровень 3 задачи ===");
         // level3Task1();
@@ -74,7 +73,7 @@ public class Tasks_v2_Empty {
                 .filter(student -> student.getGpa() > 3.5)
                 .sorted(Comparator.comparingDouble(Student::getGpa).reversed())
                 .collect(Collectors.groupingBy(student -> {
-                            var b = student.getGpa() - student.getGpa() % 100 ;
+                            var b = student.getGpa() - student.getGpa() % 100;
                             return b;
                         },
                         LinkedHashMap::new, mapping(Student::getFullName, toSet())));
@@ -92,8 +91,15 @@ public class Tasks_v2_Empty {
      * Задача 1.2: Найти все курсы уровня ADVANCED с количеством кредитов >= 4
      * Демонстрируем: фильтрация по перечислимым значениям
      */
-    public static void level1Task2() {
+    public static List<String> level1Task2(List<Course> courses) {
         System.out.println("Задача 1.2: Продвинутые курсы с высокими кредитами");
+
+        var a = courses.stream()
+                .filter(f -> f.getLevel() == CourseLevel.ADVANCED)
+                .filter(course -> course.getCredits() >= 4)
+                .map(courses1 -> courses1.getName() + " (" + courses1.getCredits() + " кредитов)")
+                .toList();
+        return a;
 
         // TODO: Создать List<String> с названиями курсов формата "название (X кредитов)"
         // Фильтровать по уровню ADVANCED и кредитам >= 4
@@ -105,35 +111,42 @@ public class Tasks_v2_Empty {
      * Задача 1.3: Получить email'ы всех преподавателей с профессорскими званиями
      * Демонстрируем: фильтрация enum + трансформация
      */
-    public static void level1Task3() {
+    public static List<String> level1Task3(List<Teacher> teachers) {
         System.out.println("Задача 1.3: Email'ы старших преподавателей");
-
-        // TODO: Создать List<String> с email'ами преподавателей
-        // Фильтровать по рангу PROFESSOR или ASSOCIATE_PROFESSOR
-        // Отсортировать и вывести
-
+        var a = teachers.stream()
+                .filter(teacher -> teacher.getRank() == AcademicRank.ASSOCIATE_PROFESSOR || teacher.getRank() == AcademicRank.PROFESSOR)
+                .sorted(Comparator.comparing(Teacher::getRank).reversed())
+                .map(teacher -> teacher.getEmail() + " - rank - " + teacher.getRank())
+                .toList();
+        return a;
     }
 
     /**
      * Задача 1.4: Найти все проекты со статусом COMPLETED и бюджетом > 5000
      * Демонстрируем: работа с Optional полями
      */
-    public static void level1Task4() {
+    public static Optional<List<Project>> level1Task4(List<Project> projects) {
         System.out.println("Задача 1.4: Завершенные проекты с крупным бюджетом");
-
-        // TODO: Создать List<String> с названиями и бюджетом проектов
-        // Формат: "название - $бюджет"
-        // Фильтровать по статусу COMPLETED и бюджету > 5000
-
+        var a = projects.stream()
+                .filter(project -> project.getStatus() == ProjectStatus.COMPLETED)
+                .filter(project -> project.getBudget() > 5000)
+                .toList();
+        return Optional.of(a);
     }
 
     /**
      * Задача 1.5: Получить названия всех компаний из IT индустрии
      * Демонстрируем: простая фильтрация строк
      */
-    public static void level1Task5() {
+    public static List<String> level1Task5(List<Company> companies) {
         System.out.println("Задача 1.5: IT компании");
 
+        var a = companies.stream()
+                .filter(company -> company.getIndustry().equals("Technology"))
+                .map(Company::getName)
+                .sorted()
+                .toList();
+        return a;
         // TODO: Создать List<String> с названиями IT компаний
         // Фильтровать по индустрии "Technology"
         // Отсортировать по алфавиту
@@ -148,13 +161,17 @@ public class Tasks_v2_Empty {
      * Задача 2.1: Создать Map<String, List<String>> - город -> список имен студентов
      * Демонстрируем: группировка с маппингом
      */
-    public static void level2Task1() {
+    public static Map<String, List<String>> level2Task1(List<Student> students) {
         System.out.println("Задача 2.1: Студенты по городам");
 
         // TODO: Сгруппировать студентов по городам
         // Создать Map<String, List<String>> где ключ - город, значение - список имен
         // Вывести статистику по каждому городу
-
+        var a  = students.stream()
+                .collect(Collectors.groupingBy(Student::getCity,
+                        Collectors.mapping(Student::getFullName, Collectors.toList())));
+        long count = a.size();
+        return a;
     }
 
     /**

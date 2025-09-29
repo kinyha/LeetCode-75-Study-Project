@@ -2,6 +2,12 @@ package exercise.streamExercise;
 
 import exercise.streamExercise.data_v2.*;
 
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static java.util.stream.Collectors.mapping;
+import static java.util.stream.Collectors.toSet;
+
 /**
  * Stream API Задачи v2 - университетская система управления (БЕЗ РЕШЕНИЙ)
  * <p>
@@ -25,7 +31,7 @@ public class Tasks_v2_Empty {
         dataset.printDatasetStatistics();
 
         System.out.println("\n=== Уровень 1 задачи ===");
-        // level1Task1();
+        //level1Task1(students).entrySet().forEach(System.out::println);
         // level1Task2();
         // level1Task3();
         // level1Task4();
@@ -61,12 +67,24 @@ public class Tasks_v2_Empty {
      * Задача 1.1: Выводим имена всех активных студентов с GPA > 3.5
      * Демонстрируем: фильтрация + маппинг
      */
-    public static void level1Task1() {
+    public static Map<Double, Set<String>> level1Task1(List<Student> students) {
         System.out.println("Задача 1.1: Активные студенты с высоким GPA");
+        var a = students.stream()
+                .filter(student -> student.getStatus() == StudentStatus.ACTIVE)
+                .filter(student -> student.getGpa() > 3.5)
+                .sorted(Comparator.comparingDouble(Student::getGpa).reversed())
+                .collect(Collectors.groupingBy(student -> {
+                            var b = student.getGpa() - student.getGpa() % 100 ;
+                            return b;
+                        },
+                        LinkedHashMap::new, mapping(Student::getFullName, toSet())));
+        return a;
+
 
         // TODO: Создать List<String> с именами активных студентов с GPA > 3.5
         // Отсортировать по алфавиту
         // Вывести количество и список имен
+
 
     }
 

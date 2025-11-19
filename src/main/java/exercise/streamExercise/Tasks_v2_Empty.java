@@ -28,34 +28,51 @@ public class Tasks_v2_Empty {
         // Генерируем университетский датасет
         dataset = DataGeneratorV2.generateCompleteDataset();
         dataset.printDatasetStatistics();
+//
+//        System.out.println("\n=== Уровень 1 задачи ==="); // + 5/5
+////        level1Task1(dataset.getStudents()).entrySet().forEach(System.out::println);
+////        level1Task2(dataset.getCourses()).forEach(System.out::println);
+////        level1Task3(dataset.getTeachers()).forEach(System.out::println);
+////        level1Task4(dataset.getProjects()).ifPresent(System.out::println);
+////        level1Task5(dataset.getCompanies()).forEach(System.out::println);
+//
+//        System.out.println("\n=== Уровень 2 задачи ===");
+////        level2Task1(dataset.getStudents()).entrySet().forEach(System.out::println);
+//        level2Task2(dataset.getTeachers()).entrySet().forEach(System.out::println);
+////        level2Task3();
+////        level2Task4();
+////        level2Task5();
+//
+//        System.out.println("\n=== Уровень 3 задачи ===");
+//        // level3Task1();
+//        // level3Task2();
+//        // level3Task3();
+//        // level3Task4();
+//        // level3Task5();
+//
+//        System.out.println("\n=== Уровень 4 задачи ===");
+//        // level4Task1();
+//        // level4Task2();
+//        // level4Task3();
+//        // level4Task4();
+//        // level4Task5();
+        StudentStatistics topStudentsStats = dataset.getStudents().stream()
+                .filter(s -> s.getGpa() > 3.5)
+                .collect(new StudentStatisticsCollector());
 
-        System.out.println("\n=== Уровень 1 задачи ==="); // + 5/5
-//        level1Task1(dataset.getStudents()).entrySet().forEach(System.out::println);
-//        level1Task2(dataset.getCourses()).forEach(System.out::println);
-//        level1Task3(dataset.getTeachers()).forEach(System.out::println);
-//        level1Task4(dataset.getProjects()).ifPresent(System.out::println);
-//        level1Task5(dataset.getCompanies()).forEach(System.out::println);
+        StudentStatistics stats = topStudentsStats;
 
-        System.out.println("\n=== Уровень 2 задачи ===");
-        level2Task1(dataset.getStudents()).entrySet().forEach(System.out::println);
-//        level2Task2();
-//        level2Task3();
-//        level2Task4();
-//        level2Task5();
-
-        System.out.println("\n=== Уровень 3 задачи ===");
-        // level3Task1();
-        // level3Task2();
-        // level3Task3();
-        // level3Task4();
-        // level3Task5();
-
-        System.out.println("\n=== Уровень 4 задачи ===");
-        // level4Task1();
-        // level4Task2();
-        // level4Task3();
-        // level4Task4();
-        // level4Task5();
+        System.out.println("Статистика по студентам:");
+        System.out.printf("Всего студентов: %d%n", stats.totalCount);
+        System.out.printf("Минимальный GPA: %.2f%n", stats.minGpa);
+        System.out.printf("Максимальный GPA: %.2f%n", stats.maxGpa);
+        System.out.printf("Средний GPA: %.2f%n", stats.avgGpa);
+        System.out.printf("Стипендиатов: %d (%.1f%%)%n",
+                stats.scholarshipCount,
+                (stats.scholarshipCount * 100.0 / stats.totalCount));
+        System.out.println("Распределение по курсам обучения:");
+        stats.yearDistribution.forEach((year, count) ->
+                System.out.printf("  %d курс: %d студентов%n", year, count));
     }
 
     // ========================================
@@ -167,7 +184,7 @@ public class Tasks_v2_Empty {
         // TODO: Сгруппировать студентов по городам
         // Создать Map<String, List<String>> где ключ - город, значение - список имен
         // Вывести статистику по каждому городу
-        var a  = students.stream()
+        var a = students.stream()
                 .collect(Collectors.groupingBy(Student::getCity,
                         Collectors.mapping(Student::getFullName, Collectors.toList())));
         long count = a.size();
@@ -178,12 +195,24 @@ public class Tasks_v2_Empty {
      * Задача 2.2: Найти средние зарплаты преподавателей по академическим рангам
      * Демонстрируем: группировка с агрегацией
      */
-    public static void level2Task2() {
+    public static Map<AcademicRank, Double> level2Task2(List<Teacher> teachers) {
         System.out.println("Задача 2.2: Средние зарплаты по рангам");
-
+        var a = teachers.stream()
+                .collect(Collectors.groupingBy(Teacher::getRank, Collectors.averagingDouble(
+                        Teacher::getSalary)))
+                .entrySet().stream()
+                .sorted(Map.Entry.comparingByValue())
+                .collect(Collectors.toMap(
+                        Map.Entry::getKey,
+                        e -> Math.round(e.getValue() * 100.0) / 100.0,
+                        (e1,e2) -> e1,
+                        LinkedHashMap::new
+                ));
+        return a;
         // TODO: Создать Map<AcademicRank, Double> с средними зарплатами
         // Использовать Collectors.groupingBy и averagingDouble
         // Вывести результат с форматированием
+
 
     }
 
@@ -193,7 +222,6 @@ public class Tasks_v2_Empty {
      */
     public static void level2Task3() {
         System.out.println("Задача 2.3: Все специализации преподавателей");
-
         // TODO: Использовать flatMap для получения всех специализаций
         // Собрать в Set для уникальности
         // Вывести количество и список

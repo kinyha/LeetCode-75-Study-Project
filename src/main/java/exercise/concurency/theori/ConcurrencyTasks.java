@@ -245,20 +245,30 @@ public class ConcurrencyTasks {
      * Реализовать поток с обработкой interrupt
      * Main прерывает его через 2 секунды
      */
-//    static class Task7_InterruptHandling {
-//        public static void main(String[] args) throws InterruptedException {
-//            Thread worker = new Thread(() -> {
-//                try {
-//                    // TODO: Реализовать цикл с Thread.sleep() и проверкой interrupted
-//                    // TODO: Корректно обработать InterruptedException
-//                } catch (InterruptedException e) {
-//                    // TODO: Восстановить interrupted флаг
-//                }
-//            });
+    static class Solution7_InterruptHandling {
+        public static void main(String[] args) throws InterruptedException {
+            Thread worker = new Thread(() -> {
+                    int count = 0;
+                    while (!Thread.currentThread().isInterrupted()) {
+                        try {
+                            System.out.println("Working: " + count++);
+                            Thread.sleep(500);
+                        } catch (InterruptedException e) {
+                        }
+                    }
+                System.out.println("Worker finished");
+            });
+
+            worker.start();
+            Thread.sleep(2000);
+
+            System.out.println("Interrupting worker...");
+            worker.interrupt();
 //
-//            // TODO: Запустить, подождать 2 секунды, прервать
-//        }
-//    }
+//            worker.join();
+//            System.out.println("Main finished");
+        }
+    }
 
     /**
      * Задача 8: synchronized блок vs метод

@@ -1,4 +1,4 @@
-package exercise.yandex.dev.OneNew;
+package exercise.yandex.dev.tasks.paymentLimit;
 
 public record CheckResult(
         boolean access,

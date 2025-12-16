@@ -30,9 +30,9 @@ This is a LeetCode 75 study project implemented in Kotlin/Java using Gradle. The
 **Direct Class Execution (WSL/Linux):**
 ```bash
 # Run specific Java class with main method
-java -cp build/classes/java/main exercise.concurency.ConcurrentCollectionsExamples
+java -cp build/classes/java/main exercise.currency.ConcurrentCollectionsExamples
 java -cp build/classes/java/main exercise.streamExercise.Tasks_v1
-java -cp build/classes/java/main exercise.concurency.BasicThreads
+java -cp build/classes/java/main exercise.currency.BasicThreads
 
 # Pattern: java -cp build/classes/java/main <full.package.ClassName>
 ```

@@ -1,4 +1,4 @@
-package exercise.concurency.theori;
+package exercise.concurrency.theori;
 
 public class Zed {
     static void main() throws InterruptedException {

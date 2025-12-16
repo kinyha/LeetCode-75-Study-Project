@@ -1,9 +1,7 @@
-package exercise.practice.algo;
+package exercise.yandex.algo;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Stream;
 
 /**
  * Коллекция алгоритмических задач для подготовки к собеседованиям

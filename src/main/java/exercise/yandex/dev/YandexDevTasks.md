@@ -9,102 +9,73 @@
 □ Проговори план
 
 КОД:
-□ record + фабричные методы ok()/denied()
+□ record + фабричные методы ok()/fail()
 □ Map + computeIfAbsent/getOrDefault
-□ Clock через конструктор
-□ Сначала ВСЕ проверки, потом сохранение
+□ Сначала ВСЕ проверки, потом действие
 
 ТЕСТЫ:
-□ Clock.fixed() в @BeforeEach
 □ Happy path
 □ Все причины отказа
-□ Границы (==, вчера/сегодня)
-
-ВРЕМЯ:
-□ clock.instant()
-□ LocalDate.now(clock).atStartOfDay(ZoneOffset.UTC).toInstant()
-□ instant.isAfter() / isBefore()
+□ Граничные случаи
 ```
 
 ---
 
-## Задача 1: Бронирование переговорок
+## Задача 1: Банкомат (ATM)
 
-Вы — backend-разработчик в компании с офисами.
-HR просит систему бронирования переговорных комнат.
-
-Переговорка — id, название, вместимость.
-Бронь — комната, кто, начало, конец.
-
-Проверить возможность брони и вернуть результат.
+Выдать запрошенную сумму минимальным количеством купюр.
+Банкомат имеет ограниченный набор купюр разных номиналов.
 
 ```java
-BookingResult book(BookingRequest request)
+WithdrawResult withdraw(int amount)
 ```
 
 ---
 
-## Задача 2: Трекер событий
+## Задача 2: Корзина с промокодами
 
-Вы — разработчик в команде аналитики.
-Нужна система сбора и агрегации пользовательских событий.
-
-Событие — userId, тип, значение, время.
-
-Сохранять события и отдавать статистику за период.
+Интернет-магазин. Рассчитать итоговую стоимость корзины с учётом промокодов.
+Промокод даёт скидку: процент или фиксированную сумму.
+Ограничения: мин. сумма заказа, категории товаров, один промокод на заказ.
 
 ```java
-void track(Event event)
-Stats getStats(String userId, Instant from, Instant to)
+CartResult calculate(Cart cart, String promoCode)
 ```
 
 ---
 
-## Задача 3: Очередь уведомлений
+## Задача 3: Проверка платежа
 
-Вы — разработчик сервиса нотификаций.
-Нужна умная очередь отправки уведомлений.
-
-Уведомление — userId, тип (email/push/sms), приоритет, текст.
-
-Высокий приоритет первым. Не отправлять дубликаты в течение N минут.
+Платёжный сервис. Проверить возможность платежа.
+Проверки: статус карты, лимит на операцию, дневной лимит.
 
 ```java
-void enqueue(Notification notification)
-Optional<Notification> pollNext()
+PaymentResult check(PaymentRequest request)
+void confirm(String paymentId)
 ```
 
 ---
 
-## Задача 4: Контроль доступа по тарифу
+## Задача 4: Валидатор данных
 
-Вы — разработчик SaaS-продукта.
-Нужна система проверки доступа к фичам по тарифу пользователя.
-
-Тариф — название, фичи с лимитами (вызовов в день).
-
-Проверить доступ и учесть использование.
+Сервис регистрации. Валидация пользовательских данных.
+Проверить: номер карты (алгоритм Луна), телефон, email.
+Вернуть все ошибки сразу, не останавливаясь на первой.
 
 ```java
-AccessResult checkAccess(String userId, String featureName)
-void recordUsage(String userId, String featureName)
+ValidationResult validate(UserData data)
 ```
 
 ---
 
-## Задача 5: Балансировщик задач
+## Задача 5: Калькулятор доставки
 
-Вы — разработчик системы распределённых вычислений.
-Нужен компонент распределения задач по воркерам.
-
-Воркер — id, макс. нагрузка, текущие задачи.
-Задача — id, сложность (слотов).
-
-Назначить на наименее загруженного. Освободить при завершении.
+Рассчитать стоимость доставки заказа.
+Зависит от: веса, габаритов, расстояния, тарифа (эконом/экспресс).
+Хрупкий груз — наценка. Превышение габаритов — отказ.
 
 ```java
-AssignResult assign(Task task)
-void complete(String taskId)
+DeliveryResult calculate(Package pkg, String tariff, int distanceKm)
 ```
 
 ---
@@ -113,281 +84,425 @@ void complete(String taskId)
 
 # ПОДСКАЗКИ
 
-## Задача 1: Бронирование переговорок
+## Задача 1: Банкомат (ATM)
 
 **Дано:**
 
 ```java
-record Room(String id, String name, int capacity)
-record BookingRequest(String roomId, String userId, Instant start, Instant end)
-record Booking(String id, String roomId, String userId, Instant start, Instant end)
-
-// Результат
-record BookingResult(boolean success, String bookingId, String error) {
-    static BookingResult ok(String id) { return new BookingResult(true, id, null); }
-    static BookingResult fail(String err) { return new BookingResult(false, null, err); }
+record WithdrawResult(boolean success, Map<Integer, Integer> bills, String error) {
+    static WithdrawResult ok(Map<Integer, Integer> bills) {
+        return new WithdrawResult(true, bills, null);
+    }
+    static WithdrawResult fail(String error) {
+        return new WithdrawResult(false, Map.of(), error);
+    }
 }
-```
-
-**Правила:**
-- Брони одной комнаты не пересекаются
-- Время работы офиса 09:00-21:00 (опционально)
-- Мин. длительность 15 мин, макс. 4 часа (опционально)
-
-**Хранение:**
-```java
-Map<String, Room> rooms = new HashMap<>();
-Map<String, List<Booking>> bookingsByRoom = new HashMap<>();
-```
-
-**Пересечение интервалов:**
-```java
-// [s1,e1] и [s2,e2] пересекаются если: s1 < e2 AND s2 < e1
-boolean overlaps(Booking a, BookingRequest b) {
-    return b.start().isBefore(a.end()) && a.start().isBefore(b.end());
-}
-```
-
-**Edge cases:**
-- 10:00-11:00 и 11:00-12:00 — НЕ пересекаются (isBefore, не isBeforeOrEqual)
-- start >= end — невалидно
-- Комната не существует
-
----
-
-## Задача 2: Трекер событий
-
-**Дано:**
-
-```java
-record Event(String userId, String type, long value, Instant timestamp)
-
-enum AggregationType { SUM, COUNT, AVG }
-
-record Stats(String type, long value, long count)
 ```
 
 **Хранение:**
 ```java
-Map<String, List<Event>> eventsByUser = new HashMap<>();
+// номинал -> количество купюр
+Map<Integer, Integer> cassettes = new LinkedHashMap<>();
+// LinkedHashMap чтобы сохранить порядок (от большего к меньшему)
+
+public ATM() {
+    cassettes.put(5000, 10);
+    cassettes.put(2000, 10);
+    cassettes.put(1000, 10);
+    cassettes.put(500, 10);
+    cassettes.put(100, 10);
+}
 ```
 
-**Фильтрация:**
+**Жадный алгоритм:**
 ```java
-// Период [from, to)
-events.stream()
-    .filter(e -> !e.timestamp().isBefore(from) && e.timestamp().isBefore(to))
-```
+WithdrawResult withdraw(int amount) {
+    if (amount <= 0) return WithdrawResult.fail("invalid_amount");
+    if (amount % 100 != 0) return WithdrawResult.fail("not_multiple_of_100");
 
-**Агрегация:**
-```java
-Map<String, LongSummaryStatistics> byType = events.stream()
-    .collect(Collectors.groupingBy(
-        Event::type,
-        Collectors.summarizingLong(Event::value)
-    ));
+    Map<Integer, Integer> result = new LinkedHashMap<>();
+    int remaining = amount;
+
+    for (var entry : cassettes.entrySet()) {
+        int nominal = entry.getKey();
+        int available = entry.getValue();
+
+        int need = remaining / nominal;
+        int take = Math.min(need, available);
+
+        if (take > 0) {
+            result.put(nominal, take);
+            remaining -= nominal * take;
+        }
+    }
+
+    if (remaining > 0) {
+        return WithdrawResult.fail("insufficient_bills");
+    }
+
+    // Списать купюры
+    result.forEach((nom, cnt) ->
+        cassettes.merge(nom, -cnt, Integer::sum));
+
+    return WithdrawResult.ok(result);
+}
 ```
 
 **Edge cases:**
-- Нет событий в периоде
-- from >= to
-- Уточнить границы: `[from, to)` или `[from, to]`
+- amount <= 0
+- Не кратно минимальному номиналу (100)
+- Сумма больше чем есть в банкомате
+- Нужных номиналов нет (например 300₽, а есть только 500 и 1000)
+- После выдачи кассеты обновляются
+
+**Пример:**
+```
+withdraw(7600)
+→ {5000: 1, 2000: 1, 500: 1, 100: 1}
+```
 
 ---
 
-## Задача 3: Очередь уведомлений
+## Задача 2: Корзина с промокодами
 
 **Дано:**
 
 ```java
-enum NotificationType { EMAIL, PUSH, SMS }
-enum Priority { HIGH(1), MEDIUM(2), LOW(3); int value; }
+record Product(String id, String name, int price, String category)
+record Cart(List<Product> items)
 
-record Notification(
-    String id,
-    String userId,
-    NotificationType type,
-    Priority priority,
-    String payload,
-    Instant createdAt
+record PromoCode(
+    String code,
+    PromoType type,        // PERCENT, FIXED
+    int value,             // 10 = 10% или 10₽
+    int minOrderSum,       // мин. сумма заказа
+    Set<String> categories // пустой = все категории
 )
-```
 
-**Очередь с приоритетом:**
-```java
-PriorityQueue<Notification> queue = new PriorityQueue<>(
-    Comparator.comparingInt(n -> n.priority().value)
-        .thenComparing(Notification::createdAt)
-);
-```
+enum PromoType { PERCENT, FIXED }
 
-**Дедупликация:**
-```java
-record DedupeKey(String userId, NotificationType type, String payload) {}
-Map<DedupeKey, Instant> lastSent = new HashMap<>();
-Duration dedupeWindow = Duration.ofMinutes(5);
-
-boolean isDuplicate(Notification n) {
-    DedupeKey key = new DedupeKey(n.userId(), n.type(), n.payload());
-    Instant last = lastSent.get(key);
-    return last != null && last.plus(dedupeWindow).isAfter(clock.instant());
-}
-```
-
-**pollNext():**
-- Достать из очереди
-- Если дубликат — пропустить, взять следующий
-- Записать в lastSent
-- Вернуть
-
-**Edge cases:**
-- Очередь пуста
-- Все в очереди — дубликаты
-- Одинаковый приоритет — FIFO по createdAt
-
----
-
-## Задача 4: Контроль доступа по тарифу
-
-**Дано:**
-
-```java
-record Plan(String name, Map<String, FeatureLimit> features)
-record FeatureLimit(boolean enabled, int dailyLimit) // -1 = безлимит
-record Subscription(String userId, String planName, Instant expiresAt)
-
-record AccessResult(boolean allowed, String reason) {
-    static AccessResult ok() { return new AccessResult(true, null); }
-    static AccessResult denied(String r) { return new AccessResult(false, r); }
+record CartResult(int originalSum, int discount, int finalSum, String error) {
+    static CartResult ok(int original, int discount) {
+        return new CartResult(original, discount, original - discount, null);
+    }
+    static CartResult fail(String error, int original) {
+        return new CartResult(original, 0, original, error);
+    }
 }
 ```
 
 **Хранение:**
 ```java
-Map<String, Plan> plans = new HashMap<>();
-Map<String, Subscription> subscriptions = new HashMap<>();
+Map<String, PromoCode> promoCodes = new HashMap<>();
+```
 
-// Использование: userId+feature+date -> count
-record UsageKey(String userId, String feature, LocalDate date) {}
-Map<UsageKey, Integer> usage = new HashMap<>();
+**Расчёт:**
+```java
+CartResult calculate(Cart cart, String code) {
+    int originalSum = cart.items().stream()
+        .mapToInt(Product::price)
+        .sum();
+
+    if (code == null || code.isEmpty()) {
+        return CartResult.ok(originalSum, 0);
+    }
+
+    PromoCode promo = promoCodes.get(code);
+    if (promo == null) {
+        return CartResult.fail("promo_not_found", originalSum);
+    }
+
+    if (originalSum < promo.minOrderSum()) {
+        return CartResult.fail("min_sum_not_reached", originalSum);
+    }
+
+    // Сумма товаров подходящих категорий
+    int eligibleSum = cart.items().stream()
+        .filter(p -> promo.categories().isEmpty()
+                  || promo.categories().contains(p.category()))
+        .mapToInt(Product::price)
+        .sum();
+
+    if (eligibleSum == 0) {
+        return CartResult.fail("no_eligible_products", originalSum);
+    }
+
+    int discount = switch (promo.type()) {
+        case PERCENT -> eligibleSum * promo.value() / 100;
+        case FIXED -> Math.min(promo.value(), eligibleSum);
+    };
+
+    return CartResult.ok(originalSum, discount);
+}
+```
+
+**Edge cases:**
+- Пустая корзина
+- Промокод не существует
+- Сумма меньше минимальной
+- Нет товаров нужной категории
+- FIXED скидка больше суммы товаров
+- Промокод на категорию "электроника", а в корзине только "одежда"
+
+---
+
+## Задача 3: Проверка платежа
+
+**Дано:**
+
+```java
+record Card(String id, CardStatus status, int singleLimit, int dailyLimit)
+enum CardStatus { ACTIVE, BLOCKED, EXPIRED }
+
+record PaymentRequest(String cardId, int amount)
+
+record PaymentResult(boolean allowed, String reason) {
+    static PaymentResult ok() { return new PaymentResult(true, null); }
+    static PaymentResult denied(String r) { return new PaymentResult(false, r); }
+}
+```
+
+**Хранение:**
+```java
+Map<String, Card> cards = new HashMap<>();
+Map<String, Integer> dailySpent = new HashMap<>(); // cardId -> сумма за сегодня
 ```
 
 **Проверка:**
 ```java
-AccessResult checkAccess(String userId, String feature) {
-    // 1. Есть подписка?
-    // 2. Не истекла?
-    // 3. Фича в тарифе?
-    // 4. Лимит не превышен?
+PaymentResult check(PaymentRequest req) {
+    Card card = cards.get(req.cardId());
+
+    // 1. Карта существует?
+    if (card == null) {
+        return PaymentResult.denied("card_not_found");
+    }
+
+    // 2. Статус карты
+    if (card.status() != CardStatus.ACTIVE) {
+        return PaymentResult.denied("card_" + card.status().name().toLowerCase());
+    }
+
+    // 3. Лимит на операцию
+    if (req.amount() > card.singleLimit()) {
+        return PaymentResult.denied("single_limit_exceeded");
+    }
+
+    // 4. Дневной лимит
+    int spent = dailySpent.getOrDefault(req.cardId(), 0);
+    if (spent + req.amount() > card.dailyLimit()) {
+        return PaymentResult.denied("daily_limit_exceeded");
+    }
+
+    return PaymentResult.ok();
 }
 
-void recordUsage(String userId, String feature) {
-    LocalDate today = LocalDate.now(clock);
-    UsageKey key = new UsageKey(userId, feature, today);
-    usage.merge(key, 1, Integer::sum);
+void confirm(String cardId, int amount) {
+    dailySpent.merge(cardId, amount, Integer::sum);
 }
 ```
 
 **Edge cases:**
-- Нет подписки
-- Подписка истекла
-- Фича не в тарифе
-- dailyLimit = -1 (безлимит)
-- Полночь — новый день, счётчик сбрасывается
+- Карта не найдена
+- Карта заблокирована / истекла
+- Превышен лимит на одну операцию
+- Превышен дневной лимит (несколько операций)
+- amount <= 0
+
+**Важно:** `check()` не списывает лимит, только `confirm()`. Это позволяет откатить операцию.
 
 ---
 
-## Задача 5: Балансировщик задач
+## Задача 4: Валидатор данных
 
 **Дано:**
 
 ```java
-record Task(String id, int complexity)
+record UserData(String cardNumber, String phone, String email)
 
-record AssignResult(boolean success, String workerId, String error) {
-    static AssignResult ok(String wid) { return new AssignResult(true, wid, null); }
-    static AssignResult fail(String err) { return new AssignResult(false, null, err); }
+record ValidationResult(boolean valid, List<String> errors) {
+    static ValidationResult ok() {
+        return new ValidationResult(true, List.of());
+    }
+    static ValidationResult fail(List<String> errors) {
+        return new ValidationResult(false, errors);
+    }
 }
+```
 
-// Worker — mutable, не record!
-class Worker {
-    String id;
-    int maxCapacity;
-    int currentLoad;
-    Set<String> taskIds = new HashSet<>();
-
-    int available() { return maxCapacity - currentLoad; }
-
-    void assign(Task t) {
-        currentLoad += t.complexity();
-        taskIds.add(t.id());
+**Алгоритм Луна (проверка номера карты):**
+```java
+boolean isValidCardNumber(String number) {
+    if (number == null || !number.matches("\\d{16}")) {
+        return false;
     }
 
-    void release(Task t) {
-        currentLoad -= t.complexity();
-        taskIds.remove(t.id());
+    int sum = 0;
+    boolean alternate = false;
+
+    for (int i = number.length() - 1; i >= 0; i--) {
+        int digit = number.charAt(i) - '0';
+
+        if (alternate) {
+            digit *= 2;
+            if (digit > 9) digit -= 9;
+        }
+
+        sum += digit;
+        alternate = !alternate;
+    }
+
+    return sum % 10 == 0;
+}
+```
+
+**Валидация:**
+```java
+ValidationResult validate(UserData data) {
+    List<String> errors = new ArrayList<>();
+
+    // Карта
+    if (!isValidCardNumber(data.cardNumber())) {
+        errors.add("invalid_card_number");
+    }
+
+    // Телефон: +7XXXXXXXXXX или 8XXXXXXXXXX
+    if (data.phone() == null ||
+        !data.phone().matches("(\\+7|8)\\d{10}")) {
+        errors.add("invalid_phone");
+    }
+
+    // Email: простая проверка
+    if (data.email() == null ||
+        !data.email().matches(".+@.+\\..+")) {
+        errors.add("invalid_email");
+    }
+
+    return errors.isEmpty()
+        ? ValidationResult.ok()
+        : ValidationResult.fail(errors);
+}
+```
+
+**Edge cases:**
+- null значения
+- Пустые строки
+- Карта не проходит алгоритм Луна
+- Карта не 16 цифр
+- Телефон с пробелами/скобками
+- Email без точки в домене
+
+**Важно:** Собрать ВСЕ ошибки, не останавливаться на первой.
+
+---
+
+## Задача 5: Калькулятор доставки
+
+**Дано:**
+
+```java
+record Package(
+    double weightKg,
+    int lengthCm, int widthCm, int heightCm,
+    boolean fragile
+)
+
+record Tariff(
+    String name,
+    int basePrice,
+    int pricePerKg,
+    int pricePerKm,
+    int maxWeightKg,
+    int maxDimensionCm  // макс. любая сторона
+)
+
+record DeliveryResult(boolean possible, int price, String error) {
+    static DeliveryResult ok(int price) {
+        return new DeliveryResult(true, price, null);
+    }
+    static DeliveryResult fail(String error) {
+        return new DeliveryResult(false, 0, error);
     }
 }
 ```
 
 **Хранение:**
 ```java
-Map<String, Worker> workers = new HashMap<>();
-Map<String, Task> tasks = new HashMap<>();       // taskId -> Task
-Map<String, String> taskToWorker = new HashMap<>(); // taskId -> workerId
-```
+Map<String, Tariff> tariffs = new HashMap<>();
 
-**Выбор воркера:**
-```java
-Optional<Worker> findWorker(int slots) {
-    return workers.values().stream()
-        .filter(w -> w.available() >= slots)
-        .min(Comparator.comparingInt(w -> w.currentLoad));
+public DeliveryService() {
+    tariffs.put("economy", new Tariff("economy", 100, 10, 5, 30, 150));
+    tariffs.put("express", new Tariff("express", 300, 20, 15, 20, 100));
 }
 ```
 
-**complete():**
+**Расчёт:**
 ```java
-void complete(String taskId) {
-    String workerId = taskToWorker.remove(taskId);
-    Task task = tasks.remove(taskId);
-    if (workerId != null && task != null) {
-        workers.get(workerId).release(task);
+DeliveryResult calculate(Package pkg, String tariffName, int distanceKm) {
+    Tariff tariff = tariffs.get(tariffName);
+    if (tariff == null) {
+        return DeliveryResult.fail("unknown_tariff");
     }
+
+    // Проверка веса
+    if (pkg.weightKg() > tariff.maxWeightKg()) {
+        return DeliveryResult.fail("weight_exceeded");
+    }
+
+    // Проверка габаритов
+    int maxSide = Math.max(pkg.lengthCm(),
+                  Math.max(pkg.widthCm(), pkg.heightCm()));
+    if (maxSide > tariff.maxDimensionCm()) {
+        return DeliveryResult.fail("dimensions_exceeded");
+    }
+
+    // Расчёт
+    int price = tariff.basePrice()
+        + (int)(pkg.weightKg() * tariff.pricePerKg())
+        + distanceKm * tariff.pricePerKm();
+
+    // Хрупкий груз +50%
+    if (pkg.fragile()) {
+        price = price * 150 / 100;
+    }
+
+    return DeliveryResult.ok(price);
 }
 ```
 
 **Edge cases:**
-- complexity > maxCapacity любого воркера
-- Все воркеры заняты
-- complete() несуществующей задачи
-- Повторный assign() той же задачи
+- Неизвестный тариф
+- Вес превышает максимум
+- Габариты превышают максимум
+- Расстояние 0 или отрицательное
+- Хрупкий груз (наценка)
+- Объёмный вес (опционально): `length * width * height / 5000`
 
 ---
 
 ## Паттерны
 
-**Clock:**
+**Result-тип:**
 ```java
-public Service(Repo repo, Clock clock) {
-    this.clock = clock;
-}
-public Service(Repo repo) {
-    this(repo, Clock.systemUTC());
+record Result(boolean success, Data data, String error) {
+    static Result ok(Data d) { return new Result(true, d, null); }
+    static Result fail(String e) { return new Result(false, null, e); }
 }
 ```
 
-**Тест:**
+**Сбор всех ошибок:**
 ```java
-private static final Instant NOW = Instant.parse("2025-01-15T12:00:00Z");
-
-@BeforeEach
-void setUp() {
-    clock = Clock.fixed(NOW, ZoneOffset.UTC);
-}
+List<String> errors = new ArrayList<>();
+if (condition1) errors.add("error1");
+if (condition2) errors.add("error2");
+return errors.isEmpty() ? ok() : fail(errors);
 ```
 
-**Начало дня:**
+**Порядок проверок:**
 ```java
-LocalDate.now(clock).atStartOfDay(ZoneOffset.UTC).toInstant()
+// 1. Существование (карта, пользователь, тариф)
+// 2. Статус (активен, не заблокирован)
+// 3. Валидация данных (формат, диапазон)
+// 4. Бизнес-правила (лимиты, ограничения)
+// 5. Действие (списание, сохранение)
 ```

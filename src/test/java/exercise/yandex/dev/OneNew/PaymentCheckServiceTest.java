@@ -1,6 +1,6 @@
 package exercise.yandex.dev.OneNew;
 
-import exercise.yandex.dev.tasks.paymentLimit.*;
+import exercise.yandex.dev.tasks.old.paymentLimit.*;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;

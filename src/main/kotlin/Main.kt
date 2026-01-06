@@ -110,22 +110,22 @@ enum class Status(val code: Int) {
     fun isActive() = this == ACTIVE
 }
 
-//fun main() {
-//    val sum = { a: Int, b: Int -> a + b }
-//    val substring = { a: Int, b: Int -> a * b }
-//    val multiply = { a: Int, b: Int -> a * b }
-//    val divide = { a: Int, b: Int -> a / b }
-//
-//    val c = sumS(5, 6, multiply)
-//    println(c)
-//
-//
-//    val list = listOf(1, 2, 3, 4, 5, 6)
-//    list.map { it + 2 }
-//        .filter { it % 2 == 0 }
-//        .filter { isSmallerThan5(it) }
-//        .forEach(::println)
-//}
+fun main() {
+    val sum = { a: Int, b: Int -> a + b }
+    val substring = { a: Int, b: Int -> a * b }
+    val multiply = { a: Int, b: Int -> a * b }
+    val divide = { a: Int, b: Int -> a / b }
+
+    val c = sumS(5, 6, multiply)
+    println(c)
+
+
+    val list = listOf(1, 2, 3, 4, 5, 6)
+    list.map { it + 2 }
+        .filter { it % 2 == 0 }
+        .filter { isSmallerThan5(it) }
+        .forEach(::println)
+}
 
 fun isSmallerThan5(n: Int): Boolean = n >= 5
 
@@ -249,9 +249,9 @@ class Click : Clickable {
 
 //7
 
-fun main() {
-   // listOf(List)
-}
+//fun main() {
+//   // listOf(List)
+//}
 
 
 

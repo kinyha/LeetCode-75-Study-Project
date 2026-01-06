@@ -1,7 +1,6 @@
 package exercise.yandex.algo;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 /**
  * Коллекция алгоритмических задач для подготовки к собеседованиям
@@ -38,14 +37,14 @@ public class AlgorithmicTasks {
 //        System.out.println("countVowels '' => " + countVowels("")); // 0
 ////
         // Задача 4: isEven
-        System.out.println("isEven 4 => " + isEven(4)); // true
-        System.out.println("isEven 7 => " + isEven(7)); // false
-        System.out.println("isEven -2 => " + isEven(-2)); // true
-//
-        // Задача 5: sumArray
-        System.out.println("sumArray [1,2,3,4,5] => " + sumArray(new int[]{1, 2, 3, 4, 5})); // 15
-        System.out.println("sumArray [-1,-2,3] => " + sumArray(new int[]{-1, -2, 3})); // 0
-        System.out.println("sumArray [] => " + sumArray(new int[]{})); // 0
+//        System.out.println("isEven 4 => " + isEven(4)); // true
+//        System.out.println("isEven 7 => " + isEven(7)); // false
+//        System.out.println("isEven -2 => " + isEven(-2)); // true
+////
+//        // Задача 5: sumArray
+//        System.out.println("sumArray [1,2,3,4,5] => " + sumArray(new int[]{1, 2, 3, 4, 5})); // 15
+//        System.out.println("sumArray [-1,-2,3] => " + sumArray(new int[]{-1, -2, 3})); // 0
+//        System.out.println("sumArray [] => " + sumArray(new int[]{})); // 0
 //
 //        System.out.println("\n=== ТЕСТЫ УРОВЕНЬ 2 ===");
 //
@@ -53,11 +52,11 @@ public class AlgorithmicTasks {
 //        System.out.println("findFirstDuplicate [1,2,3,2,4] => " + findFirstDuplicate(new int[]{1, 2, 3, 2, 4})); // 2
 //        System.out.println("findFirstDuplicate [1,1,2] => " + findFirstDuplicate(new int[]{1, 1, 2})); // 1
 //        System.out.println("findFirstDuplicate [1,2,3] => " + findFirstDuplicate(new int[]{1, 2, 3})); // -1
-//
-//        // Задача 7: areAnagrams
-//        System.out.println("areAnagrams 'listen' & 'silent' => " + areAnagrams("listen", "silent")); // true
-//        System.out.println("areAnagrams 'The Eyes' & 'They See' => " + areAnagrams("The Eyes", "They See")); // true
-//        System.out.println("areAnagrams 'hello' & 'world' => " + areAnagrams("hello", "world")); // false
+
+        // Задача 7: areAnagrams
+        System.out.println("areAnagrams 'listen' & 'silent' => " + areAnagrams("listen", "silent")); // true
+        System.out.println("areAnagrams 'The Eyes' & 'They See' => " + areAnagrams("The Eyes", "They See")); // true
+        System.out.println("areAnagrams 'hello' & 'world' => " + areAnagrams("hello", "world")); // false
 //
 //        // Задача 8: fibonacci
 //        System.out.println("fibonacci 0 => " + fibonacci(0)); // 0
@@ -307,7 +306,17 @@ public class AlgorithmicTasks {
      * - Неоптимальная сложность
      */
     public static int findFirstDuplicate(int[] nums) {
-        // TODO: implement
+        if (nums == null || nums.length == 0) {
+            throw new IllegalArgumentException("Arr should exist and not empty");
+        }
+        Set<Integer> integers = new HashSet<>();
+
+        for (int i = 0; i < nums.length; i++) {
+            integers.add(nums[i]);
+            if (integers.size() != i + 1) {
+                return nums[i];
+            }
+        }
         return -1;
     }
 
@@ -346,8 +355,34 @@ public class AlgorithmicTasks {
      * - Не обработать пробелы
      */
     public static boolean areAnagrams(String s1, String s2) {
-        // TODO: implement
-        return false;
+        if (s1 == null || s2 == null) {
+            throw new IllegalArgumentException("args cant be null");
+        }
+        if (s1.isEmpty() && s2.isEmpty()) {
+            return true;
+        }
+        String s1WithoutSpace = s1.replace(" ", "").toLowerCase();
+        String s2WithoutSpace = s2.replace(" ", "").toLowerCase();
+        if (s1WithoutSpace.length() != s2WithoutSpace.length()) {
+            return false;
+        }
+
+        Map<Character, Integer> st1 = new TreeMap<>();
+        Map<Character, Integer> st2 = new TreeMap<>();
+        for (int i = 0; i < s1WithoutSpace.length(); i++) {
+            st1.merge(s1WithoutSpace.charAt(i), 1, Integer::sum);
+            st2.merge(s2WithoutSpace.charAt(i), 1, Integer::sum);
+        }
+
+        var maxKeySet = Math.max(st1.size(),st2.size());
+        System.out.println(st1);
+        var map = st1.size() == maxKeySet ? st1 : st2;
+        System.out.println(map.size());
+
+        for (Character c : map.keySet()) {
+            if (!Objects.equals(st1.get(c), st2.get(c))) return false;
+        }
+        return true;
     }
 
     /**

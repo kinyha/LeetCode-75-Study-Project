@@ -2,8 +2,10 @@
   "permissions": {
     "allow": [
       "Bash",
-      "Git"
+      "Git",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": []
-  }
+  },
+  "outputStyle": "Explanatory"
 }

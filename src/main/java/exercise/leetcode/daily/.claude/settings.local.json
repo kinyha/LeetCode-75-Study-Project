@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:leetcode.com)",
+      "Bash(curl -s 'https://leetcode.com/graphql' -H 'Content-Type: application/json' -d '{\"query\":\"query { activeDailyCodingChallengeQuestion { date link question { questionId title difficulty content topicTags { name } } } }\"}')",
+      "Bash(python3 -m json.tool)",
+      "Bash(powershell:*)"
+    ]
+  }
+}

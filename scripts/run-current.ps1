@@ -8,6 +8,9 @@ param(
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+if ($null -eq $ProgramArgs) {
+    $ProgramArgs = @()
+}
 
 $root = Resolve-Path (Join-Path $PSScriptRoot "..")
 Set-Location $root
@@ -69,9 +72,10 @@ $lastExitCode = 1
 foreach ($mainClass in $candidates) {
     Write-Host "Running $mainClass ..."
     & java -cp $classPath $mainClass @ProgramArgs
+    $javaSucceeded = $?
     $lastExitCode = $LASTEXITCODE
 
-    if ($lastExitCode -eq 0) {
+    if ($javaSucceeded) {
         exit 0
     }
 }

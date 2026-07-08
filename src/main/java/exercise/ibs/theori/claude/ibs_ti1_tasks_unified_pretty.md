@@ -604,7 +604,9 @@ public class OrderPaymentListener {
 
 ### 4.2 Обновление статуса заказа `updateOrderStatus` `[факт: давали Мише]`
 
-Код на входе был примерно такой (по описанию: if-else со стрингами, field injection, нет Optional, нет custom exception, нет проверок существования):
+Важно: скрин с решением Миши, скорее всего, был уже **его отрефакторенной попыткой**, а не исходным кодом задачи. Значит, на вход могли дать более простой плохой сервисный метод: обновить статус заказа, сохранить его и отправить уведомление пользователю для некоторых статусов.
+
+**Скорее всего дали такой код:**
 
 ```java
 @Service
@@ -612,148 +614,215 @@ public class OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
-    @Autowired
-    private UserRepository userRepository;
 
-    public void updateOrderStatus(Long orderId, Long userId, String status) {
+    @Autowired
+    private NotificationService notificationService;
+
+    public void updateOrderStatus(Long orderId, String newStatus) {
         Order order = orderRepository.findById(orderId).get();
-        if (status.equals("NEW")) {
-            order.setStatus("NEW");
-        } else if (status.equals("PAID")) {
-            order.setStatus("PAID");
-        } else if (status.equals("SHIPPED")) {
-            order.setStatus("SHIPPED");
+
+        if (newStatus.equals("COMPLETED")) {
+            order.setStatus("COMPLETED");
+            orderRepository.save(order);
+            notificationService.notifyUser(
+                order.getUserId(),
+                "Your order is completed"
+            );
+        } else if (newStatus.equals("CANCELLED")) {
+            order.setStatus("CANCELLED");
+            order.setReason("CANCELLED reason");
+            orderRepository.save(order);
+            notificationService.notifyUser(
+                order.getUserId(),
+                "Your order is cancelled"
+            );
+        } else if (newStatus.equals("PENDING")) {
+            order.setStatus("PENDING");
+            orderRepository.save(order);
+        } else if (newStatus.equals("IN_PROGRESS")) {
+            order.setStatus("IN_PROGRESS");
+            orderRepository.save(order);
         } else {
-            throw new IllegalArgumentException("Unknown status");
+            throw new IllegalArgumentException("Unsupported status: " + newStatus);
         }
-        orderRepository.save(order);
     }
 }
 ```
 
-**Полный список замечаний (проговори все, даже очевидные):**
+**Что не так:**
 
 1. **Field injection через @Autowired** → constructor injection: поля final, зависимости обязательны и видны, тестируется без Spring, циклы падают на старте. С одним конструктором аннотация не нужна.
 2. **`findById(...).get()`** — NoSuchElementException на пустом Optional. → `orElseThrow(() -> new OrderNotFoundException(orderId))`.
-3. **Нет проверки существования user** и того, что заказ принадлежит этому пользователю / у пользователя есть право менять статус.
-4. **Строки вместо enum** — magic strings, опечатки не ловятся компилятором. → `enum OrderStatus`, в entity `@Enumerated(EnumType.STRING)` (ORDINAL ломается при изменении порядка констант).
-5. **if-else цепочка** → как минимум switch по enum; правильнее — **валидация переходов** (стейт-машина): из NEW можно в PAID, из PAID в SHIPPED, из SHIPPED — никуда. Сейчас код позволяет SHIPPED → NEW.
-6. **IllegalArgumentException** как бизнес-ошибка → кастомные исключения (OrderNotFoundException, InvalidStatusTransitionException) + маппинг в HTTP-статусы через @RestControllerAdvice (404 / 409 / 400).
-7. **Нет @Transactional** — read-modify-write должен быть атомарным.
-8. **Конкурентность**: два параллельных запроса на один заказ → lost update. → `@Version` (optimistic lock) или пессимистичная блокировка при горячих заказах.
-9. **`status.equals(...)` упадёт NPE при status == null** — если оставлять строки, то `"NEW".equals(status)`; но правильный фикс — enum на уровне DTO + Bean Validation.
-10. Мелочи: нет логирования, метод void — стоит вернуть обновлённое состояние/DTO, нет тестов.
+3. **Статус строкой** — magic strings, опечатки не ловятся компилятором. → `enum OrderStatus`, в entity `@Enumerated(EnumType.STRING)`.
+4. **`newStatus.equals(...)` упадёт NPE при `newStatus == null`**. Но правильный фикс — не переворачивать equals, а принимать enum/DTO с validation.
+5. **Длинная if-else цепочка** → лучше `switch` по enum или отдельная логика переходов.
+6. **Дублирование `save` и `notifyUser`** в ветках.
+7. **Нет проверки `userId` перед уведомлением**: если `order.getUserId()` null, уведомление сломается или уйдёт некорректно.
+8. **`IllegalArgumentException` как бизнес-ошибка** → лучше custom exceptions + маппинг через `@RestControllerAdvice`.
+9. **Нет `@Transactional`** — операция read-modify-write должна быть атомарной.
+10. **Уведомление внутри бизнес-операции**: если сохранение/транзакция откатится, пользователь может получить уведомление о событии, которого фактически нет. Лучше событие после успешного коммита или outbox.
+11. **Нет валидации переходов статусов**: если бизнес запрещает, например, `CANCELLED -> COMPLETED`, это надо проверять явно.
+12. Метод `void` — часто удобнее вернуть обновлённый DTO.
 
-**Целевой вид (напиши по памяти минимум дважды до собеса):**
+**Нормальный вариант ответа на интервью:**
 
 ```java
 public enum OrderStatus {
-    NEW, PAID, SHIPPED;
-
-    private static final Map<OrderStatus, Set<OrderStatus>> ALLOWED = Map.of(
-        NEW, Set.of(PAID),
-        PAID, Set.of(SHIPPED),
-        SHIPPED, Set.of()
-    );
-
-    public boolean canTransitionTo(OrderStatus target) {
-        return ALLOWED.get(this).contains(target);
-    }
+    COMPLETED,
+    CANCELLED,
+    PENDING,
+    IN_PROGRESS
 }
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final UserRepository userRepository;
-
-    public OrderService(OrderRepository orderRepository, UserRepository userRepository) {
-        this.orderRepository = orderRepository;
-        this.userRepository = userRepository;
-    }
+    private final ApplicationEventPublisher events;
 
     @Transactional
-    public OrderDto updateOrderStatus(Long orderId, Long userId, OrderStatus newStatus) {
-        User user = userRepository.findById(userId)
-            .orElseThrow(() -> new UserNotFoundException(userId));
-        Order order = orderRepository.findByIdAndUserId(orderId, userId)
+    public OrderDto updateOrderStatus(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId)
             .orElseThrow(() -> new OrderNotFoundException(orderId));
 
-        if (!order.getStatus().canTransitionTo(newStatus)) {
-            throw new InvalidStatusTransitionException(order.getStatus(), newStatus);
-        }
-        order.setStatus(newStatus);
-        return OrderDto.from(order); // dirty checking сохранит сам, save не обязателен
-    }
-}
+        validateTransition(order.getStatus(), newStatus);
 
-@RestControllerAdvice
-public class ApiExceptionHandler {
-    @ExceptionHandler(OrderNotFoundException.class)
-    ProblemDetail notFound(OrderNotFoundException e) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, e.getMessage());
+        order.setStatus(newStatus);
+
+        if (newStatus == OrderStatus.CANCELLED) {
+            order.setReason("CANCELLED reason");
+        }
+
+        if (requiresNotification(newStatus)) {
+            if (order.getUserId() == null) {
+                throw new OrderUserNotFoundException(orderId);
+            }
+            events.publishEvent(new OrderStatusChangedEvent(
+                order.getId(),
+                order.getUserId(),
+                newStatus
+            ));
+        }
+
+        return OrderDto.from(order);
     }
-    @ExceptionHandler(InvalidStatusTransitionException.class)
-    ProblemDetail conflict(InvalidStatusTransitionException e) {
-        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
+
+    private void validateTransition(OrderStatus currentStatus, OrderStatus newStatus) {
+        // Здесь должна быть бизнес-валидация переходов, если она требуется.
+    }
+
+    private boolean requiresNotification(OrderStatus status) {
+        return status == OrderStatus.COMPLETED || status == OrderStatus.CANCELLED;
     }
 }
 ```
 
-Бонус-фразы на senior: «в entity добавил бы @Version против lost update», «на контроллере enum в DTO + @Valid — невалидный статус отсечётся до сервиса», «переходы статусов покрыл бы параметризованным unit-тестом».
+```java
+@Component
+@RequiredArgsConstructor
+public class OrderNotificationListener {
 
-#### Фактическое решение Миши: почему 3.33, а не 4.00
+    private final NotificationService notificationService;
 
-Его код из скоркарты (дословно, с его ошибками):
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
+    public void onOrderStatusChanged(OrderStatusChangedEvent event) {
+        String message = switch (event.status()) {
+            case COMPLETED -> "Your order is completed";
+            case CANCELLED -> "Your order is cancelled";
+            default -> null;
+        };
+
+        if (message != null) {
+            notificationService.notifyUser(event.userId(), message);
+        }
+    }
+}
+```
+
+Если не хочется усложнять событиями, минимальный acceptable-вариант — оставить `NotificationService` в `OrderService`, но всё равно сделать constructor injection, enum, `orElseThrow`, `switch`, custom exceptions и `@Transactional`.
+
+**Более простой вариант, если интервьюер ждёт именно рефакторинг метода без событий:**
 
 ```java
 @Service
-@RequiredAgrsContruct
+@RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
     private final NotificationService notificationService;
 
-    public void updateOrderStatus(Long orderId, OrderStatus newStatus) {
-        Order order = orderRepository.findById(orderId).getOrThrow(
-            () -> { throw new ServExp(); });
-
-        if (order.userId == null) { throw ServExp; }
+    @Transactional
+    public OrderDto updateOrderStatus(Long orderId, OrderStatus newStatus) {
+        Order order = orderRepository.findById(orderId)
+            .orElseThrow(() -> new OrderNotFoundException(orderId));
 
         switch (newStatus) {
-            OrderStatus.COMPLETED -> { setOrderStatusToComplete() break; }
+            case COMPLETED -> complete(order);
+            case CANCELLED -> cancel(order);
+            case PENDING, IN_PROGRESS -> order.setStatus(newStatus);
+            default -> throw new UnsupportedOrderStatusException(newStatus);
         }
-        else if (newStatus.equals("CANCELLED")) {
-            order.setStatus("CANCELLED");
-            order.setReason("CANCELLED reason");
-            orderRepository.save(order);
-            notificationService.notifyUser(order.getUserId(), "Your order is cancelled");
-        } else if (newStatus.equals("PENDING")) { /* ... */ }
-        // ...
+
+        return OrderDto.from(order);
     }
 
-    private setOrderStatusToComplete() {
+    private void complete(Order order) {
         order.setStatus(OrderStatus.COMPLETED);
-        try {
-            orderRepository.save(order);
-            notificationService.notifyUser(order.getUserId(), "Your order is completed");
-        } catch (RepExp e) { throw ServExp; }
+        notifyUser(order, "Your order is completed");
+    }
+
+    private void cancel(Order order) {
+        order.setStatus(OrderStatus.CANCELLED);
+        order.setReason("CANCELLED reason");
+        notifyUser(order, "Your order is cancelled");
+    }
+
+    private void notifyUser(Order order, String message) {
+        if (order.getUserId() == null) {
+            throw new OrderUserNotFoundException(order.getId());
+        }
+        notificationService.notifyUser(order.getUserId(), message);
     }
 }
 ```
 
-Что он сделал правильно (за это regular-senior): constructor injection через Lombok, enum OrderStatus, кастомные исключения вместо IllegalArgument, orElseThrow-идея, уточнял бизнес-требования вслух.
+#### Фактическое решение Миши: почему 3.33, а не 4.00
 
-Что срезало балл — не повторяй:
+Его код из скоркарты был уже попыткой такого рефакторинга. По скрину видно, что направление было правильное:
 
-1. **Синтаксис развалился**: `getOrThrow` не существует (`orElseThrow`); в supplier'е orElseThrow не `{ throw ... }`, а `() -> new NotFoundException(...)` — supplier ВОЗВРАЩАЕТ исключение; смесь switch и else-if — не скомпилируется; в стрелочном case не нужен break; enum перечислен через `;` вместо `,`; `throw ServExp` без new. В редакторе без компилятора твой компилятор — ты. Медленнее, но валидно.
-2. **Enum сравнивается со строкой**: `newStatus.equals("CANCELLED")` всегда false — введя enum, он продолжил мыслить строками. Ветки должны быть `case CANCELLED ->`.
-3. **Приватный метод использует order вне скоупа** — параметр не передан.
-4. **Нет @Transactional** и нет валидации переходов (стейт-машина) — ядро задачи.
-5. **Notification внутри «транзакционного» кода**: уведомление должно уходить после успешного коммита (@TransactionalEventListener(AFTER_COMMIT) или outbox), иначе при откате юзер получит письмо о несуществующем событии. Озвучишь это — сразу senior-маркер.
-6. try/catch вокруг save с перебросом «RepExp → ServExp» — бессмысленная обёртка, Spring и так транслирует в DataAccessException; глотать/оборачивать без добавления контекста не нужно.
+1. Заменил field injection на constructor injection через Lombok.
+2. Заменил `String newStatus` на `OrderStatus newStatus`.
+3. Добавил `enum OrderStatus`.
+4. Попытался заменить `.get()` на `orElseThrow`.
+5. Добавил custom exception.
+6. Добавил проверку `userId != null`.
+7. Попытался заменить if-else на switch.
+8. Вынес часть логики в отдельный метод.
 
-Эталон решения уже выше: enum со стейт-машиной переходов + `@Transactional` + `@RestControllerAdvice`. Напиши его руками в пустом текстовом редакторе минимум дважды, потому что на собесе IDE не будет держать тебя за ручку, вот трагедия.
+Почему реализация всё равно не идеальная:
+
+1. `@RequiredAgrsContruct` написано с ошибкой, должно быть `@RequiredArgsConstructor`.
+2. `getOrThrow` не существует, нужно `orElseThrow`.
+3. `orElseThrow(() -> { throw new ServExp(); })` неверно: supplier должен вернуть exception, правильно `orElseThrow(() -> new ServExp())`.
+4. `throw ServExp;` невалидно, нужен объект исключения: `throw new ServExp(...)`.
+5. Смешаны `switch` и `else if` — такой код не скомпилируется.
+6. После перехода на enum остались сравнения со строками: `newStatus.equals("CANCELLED")`.
+7. В `case ... ->` не нужен `break`.
+8. Метод `setOrderStatusToComplete()` использует `order`, но не принимает его параметром.
+9. `catch (RepExp e) { throw ServExp; }` не добавляет полезного контекста и написан невалидно.
+10. Всё ещё не видно `@Transactional` и нормальной валидации переходов.
+
+**Короткий ответ, который надо уметь сказать вслух:**
+
+В исходном коде основная проблема в том, что статус передаётся строкой, есть field injection, опасный `findById(...).get()`, дублирование логики и нет транзакционной границы. Я бы заменил строку на enum, использовал constructor injection, доставал заказ через `orElseThrow`, обработал статусы через `switch`, вынес уведомления отдельно и добавил `@Transactional`. Если уведомление должно отправляться только после успешного сохранения, лучше публиковать доменное событие и слушать его через `@TransactionalEventListener(AFTER_COMMIT)`.
+
+**Если хочешь звучать сильнее:**
+
+1. «Если есть бизнес-правила переходов, я бы сделал state machine: не каждый статус может перейти в любой другой».
+2. «Для конкурентных обновлений добавил бы `@Version` на entity, чтобы ловить lost update».
+3. «Ошибки сервиса замаппил бы через `@RestControllerAdvice`: not found в 404, invalid transition в 409/400».
+4. «Уведомления лучше не отправлять внутри транзакции напрямую; минимум after commit, надежнее outbox».
 
 ---
 

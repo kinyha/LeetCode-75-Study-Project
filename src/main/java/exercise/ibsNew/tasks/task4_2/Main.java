@@ -1,7 +1,4 @@
-package exercise.ibsNew;
-
-import exercise.ibsNew.tasks.task4_2.Order;
-import exercise.ibsNew.tasks.task4_2.OrderItem;
+package exercise.ibsNew.tasks.task4_2;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -9,7 +6,6 @@ import java.util.Map;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 
-enum OrderStatus {UNPAID, PAID, PENDING, IN_PROGRESS, COMPLETED, CANCELLED}
 
 public class Main {
     public static void main(String[] args) {
@@ -21,8 +17,6 @@ public class Main {
 //                new OrderItem(3L, BigDecimal.valueOf(20.0), 1)
         );
         List<Order> orders = List.of(
-                new Order(1L, 1L, OrderStatus.UNPAID, items),
-                new Order(2L, 2L, OrderStatus.PAID, items),
                 new Order(3L, 3L, OrderStatus.COMPLETED, items),
                 new Order(4L, 4L, OrderStatus.CANCELLED, items),
                 new Order(5L, 5L, OrderStatus.IN_PROGRESS, items)

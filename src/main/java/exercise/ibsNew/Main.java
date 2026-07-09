@@ -1,6 +1,7 @@
 package exercise.ibsNew;
 
-import org.jetbrains.annotations.NotNull;
+import exercise.ibsNew.tasks.task4_2.Order;
+import exercise.ibsNew.tasks.task4_2.OrderItem;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -40,7 +41,7 @@ public class Main {
         System.out.println(canFulFill(orders.get(1), stock));
     }
 
-    static Map<OrderStatus, List<Order>> groupByStatus(@NotNull List<Order> orders) {
+    static Map<OrderStatus, List<Order>> groupByStatus(List<Order> orders) {
         var a = orders.stream()
                 .collect(Collectors.groupingBy(Order::getStatus, TreeMap::new, Collectors.toList()));
         return a;

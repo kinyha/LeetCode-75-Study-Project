@@ -1,13 +1,17 @@
-package exercise.ibsNew;
+package exercise.ibsNew.tasks.task4_2;
+
+
+import exercise.streamExercise.data_v1.OrderStatus;
 
 import java.math.BigDecimal;
 import java.util.List;
 
-class Order {
+public class Order {
     Long id;
     Long customerId;
     OrderStatus status;
     List<OrderItem> items;
+    String reason;
 
     public Order(Long id, Long customerId, OrderStatus status, List<OrderItem> items) {
         this.id = id;
@@ -40,12 +44,28 @@ class Order {
         this.status = status;
     }
 
+    public void setStatus(String status) {
+        this.status = OrderStatus.valueOf(status);
+    }
+
     public List<OrderItem> getItems() {
         return items;
     }
 
     public void setItems(List<OrderItem> items) {
         this.items = items;
+    }
+
+    public Long getUserId() {
+        return customerId;
+    }
+
+    public String getReason() {
+        return reason;
+    }
+
+    public void setReason(String reason) {
+        this.reason = reason;
     }
 
     @Override

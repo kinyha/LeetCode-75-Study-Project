@@ -1,4 +1,4 @@
-package exercise.ibsNew;
+package exercise.ibsNew.tasks.task4_2;
 
 import java.math.BigDecimal;
 

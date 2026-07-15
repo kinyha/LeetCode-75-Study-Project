@@ -18,33 +18,34 @@ package arrays
 //Оптимищировать дичь
 fun canPlaceFlowers(flowerbed: IntArray, n: Int): Boolean {
     if (n == 0) return true
-    print(flowerbed.size)
+
     if (flowerbed.size == 1) {
-        if (flowerbed[0] == 1) return false else return true
+        return if (flowerbed[0] == 0) n <= 1 else false
     }
-    var res = 0
-    for (i in 0..<flowerbed.size) {
-        when(i) {
+
+    var planted = 0
+    for (i in flowerbed.indices) {
+        when (i) {
             0 -> {
                 if (flowerbed[i] == 0 && flowerbed[i + 1] == 0) {
-                    res++
+                    planted++
                     flowerbed[i] = 1
                 }
             }
-            flowerbed.size - 1 -> {
+            flowerbed.lastIndex -> {
                 if (flowerbed[i] == 0 && flowerbed[i - 1] == 0) {
-                    res++
+                    planted++
                     flowerbed[i] = 1
                 }
             }
             else -> {
                 if (flowerbed[i - 1] == 0 && flowerbed[i] == 0 && flowerbed[i + 1] == 0) {
-                    res++
+                    planted++
                     flowerbed[i] = 1
                 }
             }
         }
-
     }
-    return n <= res
+
+    return planted >= n
 }
